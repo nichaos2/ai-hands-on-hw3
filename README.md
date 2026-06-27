@@ -36,6 +36,8 @@ Primary Environment: `CartPole-v1`
 - Action Space: Discrete (2 actions: push left, push right).
 - Justification: CartPole-v1 was selected because it is highly reliable for validating from-scratch implementations and allows for rapid hyperparameter sweeps on a CPU/laptop GPU within a constrained timeframe. 
 
+What CartPole does? please refer to this [video](https://www.youtube.com/watch?v=2u1REHeHMrg), on a fast tutorial.
+
 ## Project Structure
 - `agents/`: Contains the core algorithmic implementations (`dqn.py`, `reinforce.py`, `a2c.py`).
 - `experiments/`: Contains runnable training scripts for each task.
@@ -57,4 +59,27 @@ This project was developed on WSL running Python 3.12. To replicate the environm
 
 2. Install dependencies: `pip install -r requirements.txt`
 
-3. Run the experiments
+## Run the experiments
+
+ **from root**
+
+### Task 1Tabular: 
+
+`python -m experiments.task1_experiment`
+    
+This produces the following:
+- plot `results/task1_tabular_qlearning.png`
+- file `tabular_qlearning_logs.csv`
+- file `tabular_q_learning_comparing_table.csv` (to fill the table in task4)
+- checkpoint in .npy files for each seed (see them with numpy load)
+
+> The exercise mentions saving .pt (PyTorch) files for the final trained weights. Because Tabular Q-learning does not use neural networks, the "weights" are just the NumPy Q-table. Therefore, we save it as a .npy file. For DQN, REINFORCE, and A2C, we will use .pt files as requested.
+
+
+## Extra
+
+- CartPole returns a continuous vector: `[cart_position, cart_velocity, pole_angle, pole_angular_velocity]`
+
+## Literature for more reading investigation
+
+- For more on the severe impact of random seeds in Deep RL, read _Deep Reinforcement Learning that Matters_,  by Henderson et al. (2018). It highlights how simply changing the random seed can dictate whether an algorithm completely fails or achieves state-of-the-art performance, underscoring why reporting multiple seeds is mandatory for empirical rigor.
