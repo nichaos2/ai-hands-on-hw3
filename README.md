@@ -63,12 +63,12 @@ This project was developed on WSL running Python 3.12. To replicate the environm
 
  **from root**
 
-### Task 1Tabular: 
+### Task 1 Tabular: 
 
 `python -m experiments.task1_experiment`
     
-This produces the following:
-- plot `results/task1_tabular_qlearning.png`
+This produces the following in the folder results::
+- plot `task1_tabular_qlearning.png`
 - file `tabular_qlearning_logs.csv`
 - file `tabular_q_learning_comparing_table.csv` (to fill the table in task4)
 - checkpoint in .npy files for each seed (see them with numpy load)
@@ -76,7 +76,26 @@ This produces the following:
 > The exercise mentions saving .pt (PyTorch) files for the final trained weights. Because Tabular Q-learning does not use neural networks, the "weights" are just the NumPy Q-table. Therefore, we save it as a .npy file. For DQN, REINFORCE, and A2C, we will use .pt files as requested.
 
 
-## Extra
+## Task 2 DQN
+
+`python -m experiments.task2_experiment_dqn`
+    
+This produces the following in the folder results:
+- plot `task2_dqn_ablation.png`
+- plot `task2_dqn_epsilon.png`
+- file `tabular_qlearning_logs.csv`
+- file `dqn_comparing_table.csv` (to fill the table in task4)
+- checkpoint in .pt files for each seed
+
+### hyperparameter study on $\epsilon$ decay
+
+For different $\epsilon$ decaying steps we may notice different behaviours on the DQN variants by judging the ablation graphs.
+
+
+`python -m experiments.hyperparameter_task2.task2_experiment_dqn_e_decay_steps`
+
+
+## Extra knowledge
 
 - CartPole returns a continuous vector: `[cart_position, cart_velocity, pole_angle, pole_angular_velocity]`
 

@@ -1,6 +1,4 @@
 import os
-
-# import sys
 import time
 
 import gymnasium as gym
@@ -8,8 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# Ensure utils and agents are accessible from the root
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from agents.tabular_q import TabularQAgent
 from utils.seeding import set_global_seed
 
