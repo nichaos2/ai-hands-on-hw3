@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Categorical
 
 
 class QNetwork(nn.Module):
@@ -31,3 +32,20 @@ class QNetwork(nn.Module):
 
         # No activation function on the final layer! Q-values can be any real number.
         return self.fc3(x)
+
+
+class PolicyNetwork(nn.Module):
+    """Neural Network for REINFORCE (Vanilla Policy Gradient)."""
+
+    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128):
+        super(PolicyNetwork, self).__init__()
+        self.fc1 = nn.Linear(state_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, action_dim)
+
+    def forward(self, x: torch.Tensor) -> Categorical:
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        logits = self.fc3(x)
+        # Return a categorical distribution for easy sampling and log-prob calculation
+        return Categorical(logits=logits)

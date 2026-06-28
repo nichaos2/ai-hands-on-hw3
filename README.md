@@ -1,6 +1,6 @@
 #  Deep Reinforcement Learning: DQN, REINFORCE, and A2C
 
-_Disclaimer_: opt to keep files `README.md` and `requirements.txt` in the hw3 folder.
+_Disclaimer_: opt to keep files `README.md` and `requirements.txt` in the root folder.
 
 The project purpose is to undestand the main categories of deep reinforcement learning:
 
@@ -8,6 +8,25 @@ The project purpose is to undestand the main categories of deep reinforcement le
 - policy gradient methods
 - actor-critic methods
 
+## Struture
+
+The structure is a little different than what the exercise describes; we add some folders
+due to the experiments on $\epsilon$ decay for the DQN agent on Task 2; noted in the tree below with a left arrow
+```bash
+.
+├── README.md
+├── agents
+├── checkpoints
+├── checkpoints_e_fast  <-- 
+├── checkpoints_e_slow  <-- 
+├── experiments
+├── report.md
+├── requirements.txt
+├── results
+├── results_e_fast <--
+├── results_e_slow <--
+└── utils
+```
 
 ## Primary Environement
 
@@ -93,9 +112,15 @@ This produces the following in the folder results:
 
 For different $\epsilon$ decaying steps we may notice different behaviours on the DQN variants by judging the ablation graphs. More on the report.
 
-Execure with:
+Execute with:
 `python -m experiments.hyperparameter_task2.task2_experiment_dqn_e_decay_steps`
 
+## Task 3 
+
+### A REINFORCE
+
+Execute with:
+`python -m experiments.task3_experiment_reinforce`
 
 ## Extra knowledge for the author
 

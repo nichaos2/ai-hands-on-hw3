@@ -4,13 +4,22 @@
 
 Q-Table Size: To apply tabular Q-learning to the continuous CartPole-v1 environment, the 4-dimensional state space was discretized into 6 uniform bins per variable. This results in $6^4 = 1296$ unique discrete states. Because there are 2 possible actions, the **final Q-table size** is $1296 \times 2 = 2592$ state-action pairs.
 
+### Results
+
+The following image show the graph of
+
+<img src="results/task1_tabular_qlearning.png"
+     alt="DQN ablation study graph"
+     width="700" />
+
+
 ### Why Tabular Methods Do Not Scale
 
 Tabular methods suffer heavily from the _Curse of Dimensionality_. If we wanted to increase the resolution of our discretization to 10 bins per variable to achieve finer control, the state space would grow exponentially to $10^4 = 10,000$ states. If we moved to a slightly more complex environment like LunarLander-v2 (an 8-dimensional state space) with 10 bins, the table would require $10^8$ entries. 
 
 Because Tabular Q-learning must visit every state-action pair multiple times to converge to an optimal policy, it becomes computationally intractable—and hopelessly memory-inefficient—to train in high-dimensional continuous environments. Furthermore, tabular methods lack generalization; learning the Q-value for one bin provides absolutely no information about the neighboring bins.
 
-## Task 2
+## Task 2: DQN
 
 The following figure shows a graph of three DQN variants:
 1. the DQN-noTarget, the green line, with replay buffer, but not target network
@@ -99,16 +108,56 @@ This makes DQN highly sample efficient (it learns a lot from a small amount of e
 
 However, algorithms like REINFORCE only perform one network update per episode, and episodes vary wildly in length during early training, comparing algorithms by episodes or training steps would unfairly skew the learning curves.
 
+## Task 3: Policy Gradient
 
-## Task 4
+### A. REINFORCE
 
-Table
+The requirements from the exercise relate to the following points:
 
-|Algorithm | Steps to solve | Final return (mean)| Std | Wall-clock (min)|
-|----------|----------------|--------------------|-----|-----------------|
-|Tabular Q-learning |  Did not solve  |         264.3      |3,45 |        0.28     | 
-|DQN                |  Did not solve  |         105.42     |28.24    | 1.27                | 
-|REINFORCE          |       |                    |     |                 |
-|A2C                |       |                    |     |                 |
+1. Policy Network: Instead of outputting Q-values, the network outputs preferences for each action, which are passed through a Softmax function. This turns them into probabilities (e.g., 70% chance to move left, 30% chance to move right
+2. Return Computation (Monte Carlo): The agent plays a full episode from start to finish before learning anything. Once the episode is over, it looks backward. For every step $t$, it calculates the exact discounted future return $G_t = \sum^{T−t−1}_{k=0} \gamma^{k}r_{t+k+1}$.
+3. Return Normalization: Raw returns cause highly unstable gradients. By subtracting the mean and dividing by the standard deviation of the returns within that specific episode, we create a "baseline." Actions that performed better than average get a positive score, and actions that performed worse than average get a negative score.
+4. Gradient Update: We minimize the loss $L = -E[G_t \cdot \log\pi_\theta(a_t|s_t)]$;  if an action resulted in a positive normalized return, the gradient pushes the network to increase the probability of taking that action again. If the return was negative, the network is pushed to decrease that probability.
 
-_Note_: results for each model are in the files `agent_comparing_table.csv`
+#### Results
+
+The following image show the graph of the returns vs the environment steps for the REINFORCE algorithm
+
+<img src="results/task3_reinforce.png" 
+     alt="DQN ablation study graph"
+     width="700" />
+
+At a first glance, we notice a volatile behaviour throughout the experiment with very high standard deviation. Also we notice that the experiment reaches up to  275000 steps.
+
+From these observations, we may conclude that the learning curve suffers from severe instability and high variance, evidenced by the wide standard deviation bands and catastrophic performance drops at around 60, 125 and 200 thousand steps (which spikes up at around 80 and 140 thousand steps).
+
+Furthermore, REINFORCE proves to be highly sample-inefficient compared to DQN, requiring over 250,000 environment steps to approximate convergence. This instability highlights the difficulty of relying on raw, high-variance episodic returns for gradient updates without a learned baseline or value function.
+
+This behaviour stems from the fact that REINFORCE is a Monte Carlo method. It updates its network based on the total return of a full episode. If the agent takes 400 good steps and 1 terrible step that ends the game, it might penalize all 401 steps. This makes the gradient estimates highly noisy and creates massive variance between different training runs.
+
+### B. A2C
+
+#### Results
+
+
+## Task 4: Comparison of all agents and Hyperparameter stydy
+
+### A. Comparison
+
+#### Plot all agents.
+
+#### Table: Comparison of all agents on their results
+
+|Algorithm | Steps to solve | Final return (mean)| Std  | Wall-clock (min)|
+|----------|----------------|--------------------|------|-----------------|
+|Tabular Q-learning |  Did not solve  | 264.3    |3,45  | 0.28            | 
+|DQN                |  Did not solve  | 105.42   |28.24 | 1.27            | 
+|REINFORCE          |  Did not solve  | 348.3    |105.77| 3.07            |
+|A2C                |       |                    |      |                 |
+
+_Note_: results for each model are in the files `(agent)_comparing_table.csv`
+
+#### Discussion
+
+### Hyperparameter Study
+
