@@ -122,6 +122,10 @@ Execute with:
 Execute with:
 `python -m experiments.task3_experiment_reinforce`
 
+#### B A2C
+
+Execute with: `python -m experiments.task3_experiment_a2c`
+
 ## Extra knowledge for the author
 
 - CartPole returns a continuous vector: `[cart_position, cart_velocity, pole_angle, pole_angular_velocity]`

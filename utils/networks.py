@@ -49,3 +49,28 @@ class PolicyNetwork(nn.Module):
         logits = self.fc3(x)
         # Return a categorical distribution for easy sampling and log-prob calculation
         return Categorical(logits=logits)
+
+
+class ActorCriticNetwork(nn.Module):
+    """Shared-feature Neural Network for Advantage Actor-Critic (A2C)."""
+
+    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128):
+        super(ActorCriticNetwork, self).__init__()
+        # Shared base
+        self.base = nn.Linear(state_dim, hidden_dim)
+
+        # Actor head (Policy)
+        self.actor = nn.Linear(hidden_dim, action_dim)
+
+        # Critic head (Value)
+        self.critic = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x: torch.Tensor):
+        x = F.relu(self.base(x))
+
+        logits = self.actor(x)
+        dist = Categorical(logits=logits)
+
+        value = self.critic(x)
+
+        return dist, value

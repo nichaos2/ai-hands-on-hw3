@@ -21,6 +21,8 @@ Because Tabular Q-learning must visit every state-action pair multiple times to 
 
 ## Task 2: DQN
 
+### Results
+
 The following figure shows a graph of three DQN variants:
 1. the DQN-noTarget, the green line, with replay buffer, but not target network
 2. the DQN-noReplay, the red line, with no replay buffer, but with target network
@@ -112,9 +114,11 @@ However, algorithms like REINFORCE only perform one network update per episode, 
 
 ### A. REINFORCE
 
-The requirements from the exercise relate to the following points:
+#### Instructions
 
-1. Policy Network: Instead of outputting Q-values, the network outputs preferences for each action, which are passed through a Softmax function. This turns them into probabilities (e.g., 70% chance to move left, 30% chance to move right
+The components described in the exercise relate to the following points:
+
+1. Policy Network: Instead of outputting Q-values, the network outputs preferences for each action, which are passed through a Softmax function. This turns them into probabilities (e.g., 70% chance to move left, 30% chance to move right).
 2. Return Computation (Monte Carlo): The agent plays a full episode from start to finish before learning anything. Once the episode is over, it looks backward. For every step $t$, it calculates the exact discounted future return $G_t = \sum^{T−t−1}_{k=0} \gamma^{k}r_{t+k+1}$.
 3. Return Normalization: Raw returns cause highly unstable gradients. By subtracting the mean and dividing by the standard deviation of the returns within that specific episode, we create a "baseline." Actions that performed better than average get a positive score, and actions that performed worse than average get a negative score.
 4. Gradient Update: We minimize the loss $L = -E[G_t \cdot \log\pi_\theta(a_t|s_t)]$;  if an action resulted in a positive normalized return, the gradient pushes the network to increase the probability of taking that action again. If the return was negative, the network is pushed to decrease that probability.
@@ -135,10 +139,66 @@ Furthermore, REINFORCE proves to be highly sample-inefficient compared to DQN, r
 
 This behaviour stems from the fact that REINFORCE is a Monte Carlo method. It updates its network based on the total return of a full episode. If the agent takes 400 good steps and 1 terrible step that ends the game, it might penalize all 401 steps. This makes the gradient estimates highly noisy and creates massive variance between different training runs.
 
-### B. A2C
+### B. Advantage Actor-Critic (A2C)
+
+#### Instructions
+
+The components described in the exercise relate to the following points:
+
+1. Network: a shared MLP backbone with two heads: an actor head (policy logits) and a
+critic head (scalar value). Two separate networks are also acceptable.
+
+   Instead of two completely separate brains, the network processes the state through a shared backbone. It then branches out. The Actor outputs the action probabilities (the policy), and the Critic outputs a single number: the estimated value of being in that state
+
+2. Advantage: one-step TD advantage: $A_t = r_t + \gamma V_w(s_{t+1}) − V_w(s_t)$.
+
+   Instead of using the raw Monte Carlo return, we use the One-Step Temporal Difference (TD) error: $A_t = r_t + \gamma V(s_{t+1}) - V(s_t)$. This asks a very specific question: "Was taking this action in this state better than I normally expect this state to be?" If $A_t > 0$, the action was surprisingly good.
+
+3. Actor loss: $L_{actor} = −E[A_t · \log π_{\theta}(a_t|s_t)]$
+
+   Pushes the probabilities up for actions with a positive advantage, and down for negative ones
+
+4. Critic loss: $L_{critic} = E[(r_t + \gamma V (s_{t+1}) − V(s_t))^2]$
+
+   A standard Mean Squared Error loss. It trains the Critic to make its predictions $V(s_t)$ closer to the actual observed target $r_t + \gamma V(s_{t+1})$
+
+5. Entropy bonus: add $−\beta · H(\pi(·|s_t))$ to the total loss, $\beta \in [0.001, 0.05]$.
+
+    Neural networks can sometimes become "too sure of themselves" too early, collapsing into a suboptimal strategy (e.g., always moving right). The Entropy $H(\pi)$ measures the randomness of the policy. By subtracting it from the loss, we actively reward the network for keeping its options open, forcing exploration
+6. Combined loss: $L = L_{actor} + c_v · L_{critic} − \beta · H$, with $c_v \in [0.25, 1.0]$.
+
+- Note: Call `advantage.detach()` before computing the actor loss. Without this, gradients flow back
+through the advantage into the critic weights during the actor update, producing incorrect
+gradients in both heads.
+
+  The detach() Warning: This is a crucial PyTorch detail. The Advantage $A_t$ contains the Critic's prediction $V(s)$. If you don't detach it when multiplying it by the Actor's log-probability, PyTorch will try to calculate gradients for the Actor update by tracing backward through the Critic's weights. This destroys the mathematical separation between the two heads and causes training to collapse. 
+
 
 #### Results
 
+The experiment is conducted for the following values
+- learning rate: `lr = 1e-3`
+- $\beta$: `entropy_beta = 0.01`
+- $c_v$: `critic_coeff = 0.5` 
+
+The following image show the graph of the returns vs the environment steps for the A2C algorithm
+
+<img src="results/task3_a2c.png" 
+     alt="DQN ablation study graph"
+     width="700" />
+
+The image did not get any better by tweaking the configuration
+- `lr=5e-4`, `entropy_beta=0.005`, `critic_coeff = 0.5`; see image `task3_a2c_fail2.png`
+- `lr=5e-4`, `entropy_beta=0.005`, `critic_coeff = 0.9`; see image `task3_a2c_fail3.png`
+
+From a first glance, we see that the agent fails to learn; the Return (moving average) is entirely flatlined between 9.0 and 9.5 and
+the total training run ends abruptly just before 10,000 total steps.
+
+From these observations we can realize that in CartPole-v1, where we get +1 reward for every step you keep the pole upright when we take a completely untrained agent that just guesses "left" or "right" randomly, the pole will fall over in about 9 to 10 steps on average. Because the score never rises above 10, the A2C agent is performing no better than random guessing for the entire training run. It never figured out how to balance the pole. If the agent is randomly dying after ~9.5 steps every single time, then 1000 episodes × 9.5 steps = 9,500 total steps. The x-axis proves that the agent exhausted all 1000 allowed episodes without ever improving its lifespan.
+
+This may be caused by the high Gradient noise. Updating a neural network based on a single frame of data creates wildly noisy gradients. The network is essentially being yanked in completely different directions every millisecond.
+The Entropy has been tweaked to lower value but this does not seem to alter the behaviour.
+Another factor we can look at is the Critic network (which estimates the value) doesn't learn quickly enough in the very beginning, it feeds garbage "Advantages" to the Actor. The Actor then destroys whatever random good policy it started with
 
 ## Task 4: Comparison of all agents and Hyperparameter stydy
 
@@ -150,10 +210,10 @@ This behaviour stems from the fact that REINFORCE is a Monte Carlo method. It up
 
 |Algorithm | Steps to solve | Final return (mean)| Std  | Wall-clock (min)|
 |----------|----------------|--------------------|------|-----------------|
-|Tabular Q-learning |  Did not solve  | 264.3    |3,45  | 0.28            | 
-|DQN                |  Did not solve  | 105.42   |28.24 | 1.27            | 
-|REINFORCE          |  Did not solve  | 348.3    |105.77| 3.07            |
-|A2C                |       |                    |      |                 |
+|Tabular Q-learning | Did not solve | 264.3      |3,45  | 0.28            | 
+|DQN                | Did not solve | 105.42     |28.24 | 1.27            | 
+|REINFORCE          | Did not solve | 348.3      |105.77| 3.07            |
+|A2C                | Did not solve | 9.4        |0.03  | 0.48            |
 
 _Note_: results for each model are in the files `(agent)_comparing_table.csv`
 
