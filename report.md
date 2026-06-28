@@ -2,6 +2,13 @@
 
 ## Task 1: Tabular Q-Learning Baseline
 
+### Instructions
+
+The components described in the exercise relate to the following points:
+
+- Discretise each continuous state variable into uniform bins: Because Tabular Q-learning requires a finite lookup table (the Q-table), it cannot mathematically handle continuous state spaces which contain an infinite number of possible states. By defining uniform bins, we group similar continuous values into a single discrete state index, allowing the agent to update a specific row in the table.
+- Use $\epsilon$-greedy action selection with linear $\epsilon$ decay: This mechanism manages the exploration-exploitation tradeoff. The agent explores by taking a random action with probability $\epsilon$, and exploits by choosing the action with the highest known Q-value with probability $1 - \epsilon$. A linear decay gradually shifts the agent's behavior from 100% random exploration at the start of training to near-total exploitation of its learned policy at the end.
+
 Q-Table Size: To apply tabular Q-learning to the continuous CartPole-v1 environment, the 4-dimensional state space was discretized into 6 uniform bins per variable. This results in $6^4 = 1296$ unique discrete states. Because there are 2 possible actions, the **final Q-table size** is $1296 \times 2 = 2592$ state-action pairs.
 
 ### Results
@@ -20,6 +27,16 @@ Tabular methods suffer heavily from the _Curse of Dimensionality_. If we wanted 
 Because Tabular Q-learning must visit every state-action pair multiple times to converge to an optimal policy, it becomes computationally intractable—and hopelessly memory-inefficient—to train in high-dimensional continuous environments. Furthermore, tabular methods lack generalization; learning the Q-value for one bin provides absolutely no information about the neighboring bins.
 
 ## Task 2: DQN
+
+### Instuctions
+
+The components described in the exercise relate to the following points:
+- Replay buffer (fixed-capacity circular buffer storing $(s, a, r, s′, done)$ tuples; sample random mini-batches $\ge 32$):Neural networks assume that the data they are trained on is independent and identically distributed (i.i.d.). Sequential interactions in an environment are highly correlated. The Replay Buffer breaks this correlation by storing past experiences and sampling them randomly, which prevents the network from overfitting to the immediate sequence and suffering from catastrophic forgetting.
+- Target network (a frozen copy of the Q-network, hard-updated every $C$ steps):This solves the "moving target" problem. If the same network is used to calculate both the current Q-value prediction and the target Q-value, the network ends up chasing its own updates, leading to wild oscillations or divergence. Freezing the target network provides a stationary target for the loss function, stabilizing the gradient descent process.
+- $\epsilon$-greedy with decay (start at $\epsilon = 1.0$, decay to $\epsilon_{min} \le 0.05$):Exactly like in Tabular Q-learning, this forces the neural network to explore the environment thoroughly before converging on a specific policy. It prevents the network from getting trapped in early, sub-optimal local minima.
+- Network (at least two hidden layers with ReLU; output is one Q-value per action):The hidden layers allow the network to extract non-linear representations of the state space. By designing the output layer to yield one Q-value per discrete action, the agent can evaluate the value of all possible actions simultaneously in a single, highly efficient forward pass, rather than passing the state-action pair through the network multiple times.
+- Loss (MSE or Huber loss against the TD target):The network minimizes the error between its current prediction and the Temporal Difference (TD) target:$$y_i = r_i + \gamma \cdot \max_{a'} Q_{\theta^{-}}(s'_i, a') \cdot (1 - done_i)$$Using Huber Loss (Smooth L1 Loss) is often preferred over standard MSE because it acts like MSE when the error is small but becomes linear when the error is large, preventing massive, exploding gradients when the network's early Q-value guesses are completely inaccurate.
+
 
 ### Results
 
@@ -65,9 +82,11 @@ This study shows that even with the full DQN components, reinforcement learning 
 
 ### some more investigation on e_decay_Steps
 
-For a faster or slower decay we uncover different behaviours. Most interestingly for `e_decay_steps=5000` (line 19 file `experiments/hyperparameter_task2/task2_experiment_dqn_e_decay_steps.py`) we get the following image, wher the graph show again that the variant with NO replay has a better behaviour
+For a faster or slower decay we uncover different behaviours. 
 
-<img src="results_e_slow/task2_dqn_ablation.png" 
+Most interestingly for a fast decay `e_decay_steps=5000` (line 19 file `experiments/hyperparameter_task2/task2_experiment_dqn_e_decay_steps.py`) we get the following image, where the graph show again that the variant with NO replay has a better behaviour
+
+<img src="results_e_fast/task2_dqn_ablation.png" 
      alt="DQN ablation study graph"
      width="700" />
 
@@ -81,9 +100,9 @@ This shows that more investigation is needed to understand what is happeing in t
 
 It will be fruitful to see this hyperparameter study in a different environment in task 4b (time permitted) 
 
-On the other hand, with a faster decaying $\epsilon$ the DQN-noReplay variant ouperforms the DQN full variant at all steps as shown in the image below.
+On the other hand, with a slower decaying $\epsilon$ the DQN-noReplay variant ouperforms the DQN full variant at all steps as shown in the image below.
 
-<img src="results_e_fast/task2_dqn_ablation.png" 
+<img src="results_e_slow/task2_dqn_ablation.png" 
      alt="DQN ablation study graph"
      width="700" />
 
@@ -268,3 +287,47 @@ Finally regarding the Wall-Clock Speed which measures the computational overhead
 
 ### B. Hyperparameter Study
 
+For this experiment, we will switch the environment to Acrobot-v1, as it is a classic control task where you control a two-link pendulum (like a gymnast on a high bar). 
+
+You only apply torque to the middle joint. It is a harder exploration problem than CartPole because the agent only gets a "success" signal when the tip of the lower link swings up to a certain height.
+
+The Exploration-Exploitation TradeoffIn standard DQN, we use an $\epsilon$-greedy policy to manage how the agent discovers the world.
+- Explore (Random Action): Helps the agent discover new states and potentially higher rewards.
+- Exploit (Greedy Action): Uses the current Q-network to maximize immediate known reward.
+
+The rate at which we decay $\epsilon$ from $1.0$ (pure exploration) to $0.05$ (heavy exploitation) dictates the agent's learning trajectory
+
+By setting a fast Decay (e.g., 5,000 steps) the agent stops exploring very early. The risk is that it might find a mediocre strategy (local optimum) and exploit it forever, never realizing a much better strategy exists. In Acrobot, it might just learn to violently twitch at the bottom and never swing up.
+
+On the other hand, by setting a Slow Decay (e.g., 20,000 steps) the agent explores for a massive portion of training. This might lead to to a highly sample-inefficient behaciour. Even if the neural network has already learned the optimal path, the agent keeps taking random actions, artificially depressing its training score and wasting time.
+
+#### Results
+
+The following image show the graphs of the returns vs the environment steps for the DQN full variant for three different decaying parameters Fast decay for 5 thousand steps (red), Moderate decay for 10 thousand steps (red) and Slow decay for 20 thousand steps (green)
+
+<img src="results/task4_hyperparam_study.png" 
+     alt="comparison graph"
+     width="700" />
+
+To evaluate the sensitivity of the Deep Q-Network's exploration-exploitation tradeoff, three different $\epsilon$-decay schedules are tested on the Acrobot-v1 environment: Fast-Decay (5,000 steps), Medium-Decay (10,000 steps), and Slow-Decay (20,000 steps). 
+
+Note that the variable $\epsilon$ is set to linearly decay from $1.0$ down to $0.05$.
+
+For all three values we obser an Initial Learning Dip. All three configurations exhibit a sharp drop in performance during the first 5,000 steps. This is a common phenomenon in DQN; as the neural network begins updating its initially random weights, its early Q-value estimates are highly inaccurate, temporarily causing the agent to perform worse than pure random guessing (dropping toward the -500 step limit).
+
+Regarding the Convergence we notice that By the 50,000-step mark, all three configurations successfully converge to a near-optimal policy, achieving a moving average return of roughly $-50$.
+
+ The defining difference between the configurations is the speed of recovery and the sample efficient. The Fast-Decay (red line) recovers from the initial dip the fastest and reaches the convergence plateau of $-100$ by step 15,000.
+ 
+ The Slow-Decay (green line) suffers the deepest performance drop (down to nearly $-425$) and takes roughly 25,000 steps to reach the same plateau.
+ 
+Based on the empirical data, the Fast-Decay (5,000 steps) schedule is the best performing hyperparameter configuration for this specific task and proved superior because it maximized sample efficiency. While Acrobot-v1 requires the agent to discover a specific sequence of movements to swing the lower link upward, the physics of the environment are entirely deterministic, and the state space is relatively low-dimensional (6 variables). 
+
+The data proves that 5,000 steps of pure, unconstrained exploration were perfectly sufficient to populate the Replay Buffer with enough successful "swing-up" transitions. Once that data was in the buffer, transitioning rapidly to exploitation ($\epsilon \le 0.05$) allowed the network to immediately begin optimizing the policy.Conversely, the Medium and Slow decay schedules penalized the agent. Even though the underlying Q-network likely learned the correct physics just as quickly, the artificially high $\epsilon$ value forced the agent to continue taking sub-optimal, random actions for an additional 5,000 to 15,000 steps. This over-exploration actively delayed the onset of the optimal policy, resulting in the deeper performance dips and delayed convergence observed in the blue and green curves.
+
+Finally, we note the wall*-clock for the three runs and we note that by increasing the $\epsilon$ decay schedule the running also increases.
+- DQN Fast-Decay (5k) took 2.81 mins
+- DQN Medium-Decay (10k) took 3.06 mins
+- DQN Slow-Decay (20k) took 3.13 mins
+
+So not only the fastest schedule presents the best results but is actually the fastest as well.

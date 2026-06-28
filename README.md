@@ -2,12 +2,6 @@
 
 _Disclaimer_: opt to keep files `README.md` and `requirements.txt` in the root folder.
 
-The project purpose is to undestand the main categories of deep reinforcement learning:
-
-- value-based methods
-- policy gradient methods
-- actor-critic methods
-
 ## Struture
 
 The structure is a little different than what the exercise describes; we add some folders
@@ -133,6 +127,93 @@ Plot graph for all agents:
 - Run the command `python -m utils.plot_all_agents_from_files`
 - Result in file `task4_comparison.png`
 
+### B. Hyperparameter study
+
+Execute `python -m experiments.task4_experiment_dqn_hyperparameter`
+
+The output in the console should look like the following:
+```bash
+========================================
+Testing Epsilon Schedule: Fast-Decay (5k)
+========================================
+  Training Seed 42...
+  Training Seed 1337...
+  Training Seed 2024...
+Saved logs for Fast-Decay (5k)
+DQN Fast-Decay (5k) took 2.8116132895151775
+
+========================================
+Testing Epsilon Schedule: Medium-Decay (10k)
+========================================
+  Training Seed 42...
+  Training Seed 1337...
+  Training Seed 2024...
+Saved logs for Medium-Decay (10k)
+DQN Medium-Decay (10k) took 3.061808156967163
+
+========================================
+Testing Epsilon Schedule: Slow-Decay (20k)
+========================================
+  Training Seed 42...
+  Training Seed 1337...
+  Training Seed 2024...
+Saved logs for Slow-Decay (20k)
+DQN Slow-Decay (20k) took 3.1299931248029074
+```
+
+## Brief summary
+
+The project purpose is to undestand the main categories of deep reinforcement learning:
+
+- value-based methods
+- policy gradient methods
+- actor-critic methods
+
+------------
+
+#### Settings
+
+The experiments were primarily conducted on the continuous CartPole-v1 environment, with the final hyperparameter study utilizing the Acrobot-v1 environment.
+
+The study implemented and evaluated Tabular Q-Learning, Deep Q-Networks (DQN) alongside an ablation study, REINFORCE (Monte Carlo Policy Gradient), and Advantage Actor-Critic (A2C).
+
+#### Runnings
+
+The algorithm of the Tabular Q-Learning was the fastest to execute at 0.28 minutes due to relying on simple dictionary lookups rather than neural networks.
+
+ON the other hand, REINFORCE was the slowest algorithm, taking 3.07 minutes, because the agent survived for hundreds of steps per episode and required full episodic forward passes.
+Notebly, A2C recorded a falsely fast time of 0.48 minutes strictly because the agent died almost immediately (every 9.4 steps) and exhausted its 1,000 allowed episodes rapidly.
+
+Hyperparameter Runnings: In the Acrobot-v1 study, the fastest decay schedule (5k steps) was also the fastest to run in wall-clock time (2.81 minutes) and presented best results.
+
+#### Results
+
+None of the algorithms officially "solved" the CartPole-v1 environment, which requires a moving average of 475+.
+
+Tabular Q-Learning was stable but sample-inefficient, DQN had the highest initial sample efficiency but collapsed later, and REINFORCE suffered from extreme variance and instability. A2C failed entirely, performing no better than random guessing (mean return of 9.4).
+
+Most interesting feature is the DQN Ablation: The DQN-noTarget variant failed to learn completely, remaining flat near zero. The DQN-noReplay variant learned quickly but suffered from a rapid performance drop after 42,000 steps.
+
+Hyperparameter Sweep: For the Acrobot-v1 task, the Fast-Decay (5,000 steps) schedule was the undisputed winner, recovering from the initial learning dip fastest and reaching a convergence plateau of -100 by step 15,000.
+
+#### Insights
+
+By exploring these set of experiments we gained insights on the following:
+
+  - Curse of Dimensionality: The Tabular Q-Learning experiment highlights that tabular methods cannot scale to high-dimensional continuous environments because the memory and sampling requirements grow exponentially.
+
+  - Necessity of DQN Components: The ablation study proves that a frozen target network is strictly required to prevent the divergence of the Q-function (the moving target problem), and a replay buffer is essential to decorrelate data and prevent catastrophic forgetting.
+
+  - REINFORCE Limitations: The high variance and sample inefficiency of REINFORCE stems from its Monte Carlo nature, where gradient estimates become highly noisy by penalizing or rewarding an entire episode's worth of steps based on a single raw outcome.
+
+  - Exploration-Exploitation Efficiency: The hyperparameter study reveals that in deterministic, low-dimensional environments with sparse rewards (like Acrobot), artificially prolonging exploration (slow epsilon decay) actively delays the onset of the optimal policy and reduces sample efficiency.
+
+#### Future steps
+
+DQN Tuning: The report highlights a need for further tuning of the DQN-full agent (e.g., adjusting learning rates, using a larger replay buffer, or implementing Double DQN) to prevent the sharp drops and local policy traps observed in later training steps.
+
+A2C Investigation: Since tweaking the entropy beta and learning rate did not fix the catastrophic initialization failure of A2C, further investigation is needed to address the high gradient noise caused by 1-step TD updates.
+
 ## Extra knowledge for the author
 
 - CartPole returns a continuous vector: `[cart_position, cart_velocity, pole_angle, pole_angular_velocity]`
@@ -142,3 +223,4 @@ Plot graph for all agents:
 - For more on the severe impact of random seeds in Deep RL, read _Deep Reinforcement Learning that Matters_,  by Henderson et al. (2018). It highlights how simply changing the random seed can dictate whether an algorithm completely fails or achieves state-of-the-art performance, underscoring why reporting multiple seeds is mandatory for empirical rigor.
 - REINFORCE was introduced by Ronald J. Williams in 1992 in the seminal paper: "Simple statistical gradient-following algorithms for connectionist reinforcement learning." Link to [paper](https://link.springer.com/article/10.1007/BF00992696).
 - Mnih, V., Kavukcuoglu, K., Silver, D. et al. Human-level control through deep reinforcement learning. Nature 518, 529–533 (2015). https://doi.org/10.1038/nature14236.
+- The fundamental dilemma of exploration vs. exploitation is foundational to RL. It is covered extensively in Chapter 2 of Sutton & Barto's canonical textbook: Reinforcement Learning: An Introduction. Furthermore, the $\epsilon$-greedy strategy specifically utilized in Deep Q-Networks was formalized in the original DeepMind Atari paper (Mnih et al., 2013).
