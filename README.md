@@ -89,16 +89,20 @@ This produces the following in the folder results:
 
 ### hyperparameter study on $\epsilon$ decay
 
-For different $\epsilon$ decaying steps we may notice different behaviours on the DQN variants by judging the ablation graphs.
+(in the scope of task 2)
 
+For different $\epsilon$ decaying steps we may notice different behaviours on the DQN variants by judging the ablation graphs. More on the report.
 
+Execure with:
 `python -m experiments.hyperparameter_task2.task2_experiment_dqn_e_decay_steps`
 
 
-## Extra knowledge
+## Extra knowledge for the author
 
 - CartPole returns a continuous vector: `[cart_position, cart_velocity, pole_angle, pole_angular_velocity]`
 
 ## Literature for more reading investigation
 
 - For more on the severe impact of random seeds in Deep RL, read _Deep Reinforcement Learning that Matters_,  by Henderson et al. (2018). It highlights how simply changing the random seed can dictate whether an algorithm completely fails or achieves state-of-the-art performance, underscoring why reporting multiple seeds is mandatory for empirical rigor.
+- REINFORCE was introduced by Ronald J. Williams in 1992 in the seminal paper: "Simple statistical gradient-following algorithms for connectionist reinforcement learning." Link to [paper](https://link.springer.com/article/10.1007/BF00992696).
+- Mnih, V., Kavukcuoglu, K., Silver, D. et al. Human-level control through deep reinforcement learning. Nature 518, 529–533 (2015). https://doi.org/10.1038/nature14236.
