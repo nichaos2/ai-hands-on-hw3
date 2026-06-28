@@ -9,7 +9,7 @@ Q-Table Size: To apply tabular Q-learning to the continuous CartPole-v1 environm
 The following image show the graph of
 
 <img src="results/task1_tabular_qlearning.png"
-     alt="DQN ablation study graph"
+     alt="Tabular Q learning graph"
      width="700" />
 
 
@@ -31,6 +31,12 @@ The following figure shows a graph of three DQN variants:
 <img src="results/task2_dqn_ablation.png" 
      alt="DQN ablation study graph"
      width="700" />
+
+For completeness we present the decay for $\epsilon$, which shows gow fast it deacays from 1 to 0.05.
+<img src="results/task2_dqn_epsilon.png" 
+     alt="DQN ablation study graph"
+     width="700" />
+
 
 The DQN-noTarget variant completely fails to learn and stays flat near zero.
 
@@ -128,7 +134,7 @@ The components described in the exercise relate to the following points:
 The following image show the graph of the returns vs the environment steps for the REINFORCE algorithm
 
 <img src="results/task3_reinforce.png" 
-     alt="DQN ablation study graph"
+     alt="Reinforce graph"
      width="700" />
 
 At a first glance, we notice a volatile behaviour throughout the experiment with very high standard deviation. Also we notice that the experiment reaches up to  275000 steps.
@@ -184,7 +190,7 @@ The experiment is conducted for the following values
 The following image show the graph of the returns vs the environment steps for the A2C algorithm
 
 <img src="results/task3_a2c.png" 
-     alt="DQN ablation study graph"
+     alt="A2C graph"
      width="700" />
 
 The image did not get any better by tweaking the configuration
@@ -206,6 +212,15 @@ Another factor we can look at is the Critic network (which estimates the value) 
 
 #### Plot all agents.
 
+The following image show the graphs of the returns vs the environment steps for all base agents used in the performed experiments, Tabular Q learning with blue, DQN with purple, REINFORCE with yellow and A2C with green.
+
+<img src="results/task4_comparison.png 
+     alt="comparison graph"
+     width="700" />
+
+
+Comments on the results at the section _Discussion_.
+
 #### Table: Comparison of all agents on their results
 
 |Algorithm | Steps to solve | Final return (mean)| Std  | Wall-clock (min)|
@@ -219,5 +234,37 @@ _Note_: results for each model are in the files `(agent)_comparing_table.csv`
 
 #### Discussion
 
-### Hyperparameter Study
+The main conclusion for all models are that none of the algorithms officially "solved" the environment (which typically requires maintaining a moving average of 475+). However, their learning behaviors are vastly different.
+
+Regarding the sample efficiency, which measures how much interaction with the environment (X-axis: Total Environment Steps) an agent needs to learn a good policy, we have the following conclusions.
+
+- DQN was maybe the best model in this topic. Despite ultimately failing, DQN demonstrated the highest initial sample efficiency. It shot up to a return of nearly 200 in less than 15,000 environment steps. It extracts a massive amount of learning from very few steps because it reuses past experiences via its Replay Buffer.
+
+- REINFORCE is probably the most inefficient. It took nearly 275,000 environment steps to complete its training run. Because it is a Monte Carlo method that throws away data after every episode, it requires a vast amount of environment interaction to reach its higher peak returns.
+
+- Tabular Q-Learning is also sample-inefficient, taking roughly 235,000 steps to reach its final mean return of 264.3. Without neural networks to generalize between similar states, it has to visit almost every discrete state-action pair manually to learn.
+
+- The A2C is "out of the competition". The configuration of A2C suffered a catastrophic initialization failure (flatlining at a random-guessing score of 9.4), hence we cannot accurately judge its sample efficiency from this run.
+
+Regarding the training Stability, which looks at the variance between different random seeds (the shaded areas) and whether the agent suffers from "catastrophic forgetting" (violent drops in performance), we draw the following conlcusions.
+
+- Tabular Q-Learning is the most stable algorithm that actually learned. As seen in the graph, it has a highly consistent, steady, and near-linear upward trajectory. The table confirms this with a remarkably low final standard deviation (Std: 3.45).
+
+- On the other hand, REINFORCE is extremely unstable. The graph shows a massive shaded area, indicating that different seeds resulted in wildly different policies. Furthermore, the mean line oscillates violently, crashing from around 450 down to around 150 repeatedly. The table reflects this extreme variance with a final Std of 105.77.
+
+- The DQN wlgorithm show an initial stable behaviour, but it suffers from forgetting leading to a abrupt decline. Around 20,000 steps, the policy completely collapsed, dropping from ~200 down to a final mean return of 105.42 (Std: 28.24).
+
+- Finally, A2C may show a Std of 0.03, but this is a false positive for stability. The agent was perfectly stable at "failing", repeatedly letting the pole fall over after exactly 9.4 steps.
+
+Finally regarding the Wall-Clock Speed which measures the computational overhead (how long the algorithm took to run in the machine)
+
+- Tabular Q-Learning is the Fastest with 0.28 min: Tabular Q-learning is incredibly fast computationally. It uses simple dictionary/array lookups and basic arithmetic to update Q-values. Because it has no neural networks, no backpropagation, and no tensor operations, it finishes in a fraction of a minute. However it does not scale.
+
+- The worst candidate is A2C which may be fast with 0.48 min, but this is an artifact of its failure. Because the agent dies every 9.4 steps, the 1,000 episodes finished very fast. If it had survived for 500 steps per episode, this wall-clock time would be higher.
+
+- DQN is Moderate fast. DQN is computationally heavy as it performs a neural network backpropagation and samples from a Replay Buffer at every single environment step. However, because its agent died quickly after policy collapse, it didn't accumulate as many total steps, keeping the time relatively low.
+
+- Finally, REINFORCE is the slowest with a run of 3.07 min in these experiments. REINFORCE took the longest because the agent learned to survive for hundreds of steps per episode (accumulating 275,000 total steps), the CPU had to perform hundreds of thousands of neural network forward passes, significantly driving up the computation time.
+
+### B. Hyperparameter Study
 

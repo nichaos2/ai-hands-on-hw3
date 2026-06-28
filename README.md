@@ -28,6 +28,8 @@ due to the experiments on $\epsilon$ decay for the DQN agent on Task 2; noted in
 └── utils
 ```
 
+It also contains two images for showing the failure of the A2C algorithm in the CartPole-v1 environment for differnt configuration values. See report.
+
 ## Primary Environement
 
 Suggestions (_disclaimer_: notes bases on gemini 3.5 Pro)
@@ -80,16 +82,18 @@ This project was developed on WSL running Python 3.12. To replicate the environm
 
 ## Run the experiments
 
- **from root**
+- Execute all commands **from root**
+- Each experiment produces results in the folder `results`, namely:
+  - the plots for the deliverable in .pgn format, 
+  - the logs, and
+  - a file to easily compare values for task (`comparing_table.csv`)
+- Additionally each experiment produces the checkpoints for each seed per agent, in the folder `checkpoints`. 
 
 ### Task 1 Tabular: 
 
 `python -m experiments.task1_experiment`
     
 This produces the following in the folder results::
-- plot `task1_tabular_qlearning.png`
-- file `tabular_qlearning_logs.csv`
-- file `tabular_q_learning_comparing_table.csv` (to fill the table in task4)
 - checkpoint in .npy files for each seed (see them with numpy load)
 
 > The exercise mentions saving .pt (PyTorch) files for the final trained weights. Because Tabular Q-learning does not use neural networks, the "weights" are just the NumPy Q-table. Therefore, we save it as a .npy file. For DQN, REINFORCE, and A2C, we will use .pt files as requested.
@@ -98,13 +102,7 @@ This produces the following in the folder results::
 ## Task 2 DQN
 
 `python -m experiments.task2_experiment_dqn`
-    
-This produces the following in the folder results:
-- plot `task2_dqn_ablation.png`
-- plot `task2_dqn_epsilon.png`
-- file `tabular_qlearning_logs.csv`
-- file `dqn_comparing_table.csv` (to fill the table in task4)
-- checkpoint in .pt files for each seed
+  
 
 ### hyperparameter study on $\epsilon$ decay
 
@@ -125,6 +123,15 @@ Execute with:
 #### B A2C
 
 Execute with: `python -m experiments.task3_experiment_a2c`
+
+## Task 4
+
+### A. Comparison of all agents
+
+Plot graph for all agents:
+- Prerequisite: run all the experiments to create the log file for each agent.
+- Run the command `python -m utils.plot_all_agents_from_files`
+- Result in file `task4_comparison.png`
 
 ## Extra knowledge for the author
 
