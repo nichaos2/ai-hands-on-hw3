@@ -67,6 +67,8 @@ def run_experiment():
             )
 
             # --- Warm-up Phase ---
+            # NOTE: Do not begin gradient updates until the buffer contains
+            #  at least 1,000 transitions collected with random actions
             if config["warmup"] > 0:
                 state, _ = env.reset(seed=seed)
                 while replay_buffer.size < config["warmup"]:

@@ -13,11 +13,23 @@ Q-Table Size: To apply tabular Q-learning to the continuous CartPole-v1 environm
 
 ### Results
 
-The following image show the graph of
+The following figure shows a graph of the return vs the episode for the Tabular Q learning algotrithm
 
 <img src="results/task1_tabular_qlearning.png"
      alt="Tabular Q learning graph"
      width="700" />
+
+Based on the learning curve (plotted over 2,000 episodes with a 50-episode moving average), we can break down the agent's performance into three distinct phases:
+
+- Initial Exploration Phase (Episodes 0 – 750): The agent's return stays very low, hovering around 20 to 50. During this phase, the agent is acting mostly randomly (due to a high $\epsilon$ value) and attempting to populate its empty Q-table. Because the continuous state space was discretized into 1,296 bins, it takes hundreds of episodes just to visit enough states to start forming a meaningful baseline policy.
+
+- Active Learning Phase (Episodes 750 – 1,600): Here, we see a clear, steady upward trajectory. The mean return climbs from 50 up to approximately 250. The agent is successfully transitioning from exploration to exploitation, utilizing the populated Q-table to keep the pole balanced for longer durations.
+
+- Plateau and High Variance Phase (Episodes 1,600 – 2,000): The mean return begins to plateau around the 200–280 mark, occasionally dipping and rising. More importantly, the shaded confidence interval becomes extremely wide (ranging from a return of ~100 to over 400).
+
+In general we note that the agent does not "Solve" the Environment. In CartPole-v1, solving the environment typically requires maintaining a moving average return of 475 or 500. The Tabular agent peaked at a mean of ~280, meaning it learned a good policy, but not an optimal one.T
+
+Additionally we notice, a very high variance (the wide shaded area) in the later episodes, which highlights the core weakness of applying tabular methods to continuous physics. If the pole's angle is right on the boundary between two discrete bins, a tiny movement can shift the agent into a completely different state with a completely different Q-value. This lack of smooth generalization causes erratic behavior, explaining why the performance fluctuates so violently even late in training.
 
 
 ### Why Tabular Methods Do Not Scale
@@ -233,7 +245,7 @@ Another factor we can look at is the Critic network (which estimates the value) 
 
 The following image show the graphs of the returns vs the environment steps for all base agents used in the performed experiments, Tabular Q learning with blue, DQN with purple, REINFORCE with yellow and A2C with green.
 
-<img src="results/task4_comparison.png 
+<img src="results/task4_comparison.png"
      alt="comparison graph"
      width="700" />
 
@@ -253,7 +265,7 @@ _Note_: results for each model are in the files `(agent)_comparing_table.csv`
 
 #### Discussion
 
-The main conclusion for all models are that none of the algorithms officially "solved" the environment (which typically requires maintaining a moving average of 475+). However, their learning behaviors are vastly different.
+The main conclusion for all models is that none of the algorithms officially "solved" the environment (which typically requires maintaining a moving average of 475+). However, their learning behaviors are vastly different.
 
 Regarding the sample efficiency, which measures how much interaction with the environment (X-axis: Total Environment Steps) an agent needs to learn a good policy, we have the following conclusions.
 
@@ -291,7 +303,7 @@ For this experiment, we will switch the environment to Acrobot-v1, as it is a cl
 
 You only apply torque to the middle joint. It is a harder exploration problem than CartPole because the agent only gets a "success" signal when the tip of the lower link swings up to a certain height.
 
-The Exploration-Exploitation TradeoffIn standard DQN, we use an $\epsilon$-greedy policy to manage how the agent discovers the world.
+We investigate the Exploration-Exploitation Tradeoff in standard DQN. we use an $\epsilon$-greedy policy to manage how the agent discovers the world.
 - Explore (Random Action): Helps the agent discover new states and potentially higher rewards.
 - Exploit (Greedy Action): Uses the current Q-network to maximize immediate known reward.
 
@@ -315,7 +327,7 @@ Note that the variable $\epsilon$ is set to linearly decay from $1.0$ down to $0
 
 For all three values we obser an Initial Learning Dip. All three configurations exhibit a sharp drop in performance during the first 5,000 steps. This is a common phenomenon in DQN; as the neural network begins updating its initially random weights, its early Q-value estimates are highly inaccurate, temporarily causing the agent to perform worse than pure random guessing (dropping toward the -500 step limit).
 
-Regarding the Convergence we notice that By the 50,000-step mark, all three configurations successfully converge to a near-optimal policy, achieving a moving average return of roughly $-50$.
+Regarding the convergence we notice that by the 50,000-step mark, all three configurations successfully converge to a near-optimal policy, achieving a moving average return of roughly $-50$.
 
  The defining difference between the configurations is the speed of recovery and the sample efficient. The Fast-Decay (red line) recovers from the initial dip the fastest and reaches the convergence plateau of $-100$ by step 15,000.
  
@@ -325,9 +337,9 @@ Based on the empirical data, the Fast-Decay (5,000 steps) schedule is the best p
 
 The data proves that 5,000 steps of pure, unconstrained exploration were perfectly sufficient to populate the Replay Buffer with enough successful "swing-up" transitions. Once that data was in the buffer, transitioning rapidly to exploitation ($\epsilon \le 0.05$) allowed the network to immediately begin optimizing the policy.Conversely, the Medium and Slow decay schedules penalized the agent. Even though the underlying Q-network likely learned the correct physics just as quickly, the artificially high $\epsilon$ value forced the agent to continue taking sub-optimal, random actions for an additional 5,000 to 15,000 steps. This over-exploration actively delayed the onset of the optimal policy, resulting in the deeper performance dips and delayed convergence observed in the blue and green curves.
 
-Finally, we note the wall*-clock for the three runs and we note that by increasing the $\epsilon$ decay schedule the running also increases.
+Finally, we note the wall-clock for the three runs and we note that by increasing the $\epsilon$ decay schedule the running also increases.
 - DQN Fast-Decay (5k) took 2.81 mins
 - DQN Medium-Decay (10k) took 3.06 mins
 - DQN Slow-Decay (20k) took 3.13 mins
 
-So not only the fastest schedule presents the best results but is actually the fastest as well.
+So not only the fastest schedule presents the best results but is actually the fastest in calculations as well.

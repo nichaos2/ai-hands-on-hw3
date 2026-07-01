@@ -2,10 +2,13 @@
 
 _Disclaimer_: opt to keep files `README.md` and `requirements.txt` in the root folder.
 
-## Struture
+## Structure
 
-The structure is a little different than what the exercise describes; we add some folders
-due to the experiments on $\epsilon$ decay for the DQN agent on Task 2; noted in the tree below with a left arrow
+The structure is kept as described in teh assignement with some additions.
+
+- we add some folders noted in the tree below with a left arrow
+to keep the data from the experiments on $\epsilon$ decay for the DQN agent **on Task 2**; 
+
 ```bash
 .
 ├── README.md
@@ -22,7 +25,8 @@ due to the experiments on $\epsilon$ decay for the DQN agent on Task 2; noted in
 └── utils
 ```
 
-It also contains two images for showing the failure of the A2C algorithm in the CartPole-v1 environment for differnt configuration values. See report.
+- The folder `results` also contains two images for showing the failure of the A2C algorithm in the CartPole-v1 environment for different configuration values (learning rate, entropy coefficient $\beta$, $c_v$ coefficient). These are not part of the deliverables See report for more details.
+- Finally, the folder results containg an additional csv file for filling the comparing table for task 4.
 
 ## Primary Environement
 
@@ -61,12 +65,13 @@ What CartPole does? please refer to this [video](https://www.youtube.com/watch?v
 - `checkpoints/`: Stores final trained model weights (`.pt`).
 - `report.md`: Written analysis and empirical comparison of the algorithms.
 
-> Note on Version Control Best Practices: > Industry best practice dictates that binary files (like `.pt` model weights and `.png` plots) and training logs (`.csv`) should be ignored by Git using a `.gitignore` file and instead tracked via tools like MLflow, Weights & Biases, or DVC. However, to strictly comply with the specific deliverables of this exercise, these files are explicitly committed to this repository.
+> Note on Version Control Best Practices: Industry best practice dictates that binary files (like `.pt` model weights and `.png` plots) and training logs (`.csv`) should be ignored by Git using a `.gitignore` file and instead tracked via tools like MLflow, Weights & Biases, or DVC. However, to strictly comply with the specific deliverables of this exercise, these files are explicitly committed to this repository.
 
 ## Setup & Installation
+
 This project was developed on WSL running Python 3.12. To replicate the environment:
 
-1. Create a virtual environment (venv or .venv whatever you prefer):
+1. Create and activate a virtual environment
    ```bash
    python -m venv venv
    source venv/bin/activate
@@ -95,6 +100,7 @@ This produces the following in the folder results::
 
 ## Task 2 DQN
 
+Execute: 
 `python -m experiments.task2_experiment_dqn`
   
 
@@ -104,8 +110,10 @@ This produces the following in the folder results::
 
 For different $\epsilon$ decaying steps we may notice different behaviours on the DQN variants by judging the ablation graphs. More on the report.
 
-Execute with:
+Execute:
 `python -m experiments.hyperparameter_task2.task2_experiment_dqn_e_decay_steps`
+
+in this file we change the variable `epsilon_decay_steps` and keep the results in different folders.
 
 ## Task 3 
 
